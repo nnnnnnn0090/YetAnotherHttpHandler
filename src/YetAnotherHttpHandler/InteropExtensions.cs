@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -22,13 +21,10 @@ namespace Cysharp.Net.Http
             return new Span<byte>(ptr, length);
         }
 
-        public unsafe Span<T> AsSpan<T>()
+        public unsafe Span<T> AsSpan<T>() where T : unmanaged
         {
-#if !NETSTANDARD2_0
-            return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<T>(ptr), length / Unsafe.SizeOf<T>());
-#else
-            return new Span<T>(ptr, length / Unsafe.SizeOf<T>());
-#endif
+            int size = sizeof(T);
+            return new Span<T>(ptr, length / size);
         }
     }
 }

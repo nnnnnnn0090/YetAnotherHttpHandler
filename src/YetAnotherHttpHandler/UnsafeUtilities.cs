@@ -27,10 +27,12 @@ namespace Cysharp.Net.Http
             => left.Length == right.Length && EqualsIgnoreCase(ref MemoryMarshal.GetReference(left), ref MemoryMarshal.GetReference(right), (uint)left.Length);
         public static bool EqualsIgnoreCase(ref byte left, ref byte right, uint length)
         {
-            for (nuint i = 0; i < length; ++i)
+            var leftSpan = MemoryMarshal.CreateReadOnlySpan(ref left, (int)length);
+            var rightSpan = MemoryMarshal.CreateReadOnlySpan(ref right, (int)length);
+            for (int i = 0; i < length; i++)
             {
-                uint valueA = unchecked((uint)(Unsafe.Add(ref left, (nint)i)));
-                uint valueB = unchecked((uint)(Unsafe.Add(ref right, (nint)i)));
+                uint valueA = unchecked((uint)leftSpan[i]);
+                uint valueB = unchecked((uint)rightSpan[i]);
 
                 if (!IsAsciiCodePoint(valueA | valueB))
                 {

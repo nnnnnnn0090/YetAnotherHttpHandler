@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Pipelines;
 using System.Net.Http;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -170,10 +169,12 @@ namespace Cysharp.Net.Http
                     var ctx = _ctxHandle.DangerousGet();
                     var requestContext = _requestContextHandle.DangerousGet();
 
+                    fixed (byte* p = &MemoryMarshal.GetReference(data))
+                    {
                     while (!_requestBodyCompleted)
                     {
                         // If the internal buffer is full, yaha_request_write_body returns false. We need to wait until ready to send bytes again.
-                        var result = NativeMethods.yaha_request_write_body(ctx, requestContext, (byte*)Unsafe.AsPointer(ref data.GetPinnableReference()), (UIntPtr)data.Length);
+                        var result = NativeMethods.yaha_request_write_body(ctx, requestContext, p, (UIntPtr)data.Length);
 
                         if (result == WriteResult.Success)
                         {
@@ -188,6 +189,7 @@ namespace Cysharp.Net.Http
 
                         if (YahaEventSource.Log.IsEnabled()) YahaEventSource.Log.Trace($"[ReqSeq:{_requestSequence}:State:0x{Handle:X}] Send buffer is full.");
                         return false;
+                    }
                     }
 #if DEBUG
                     // Fill memory so that data corruption can be detected on debug build.
